@@ -25,6 +25,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "es-abstract": "^1.24.2",
     "eslint": "^9",
     "eslint-config-next": "15.1.6",
     "postcss": "^8",
