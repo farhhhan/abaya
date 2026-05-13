@@ -1,0 +1,15 @@
+{
+    "hosting": {
+        "site": "travel-web-2ea7e",
+        "public": "public",
+        "ignore": [
+            "firebase.json",
+            "**/.*",
+            "**/node_modules/**"
+        ]
+    },
+    "functions": {
+        "source": ".next",
+        "runtime": "nodejs18"
+    }
+}
