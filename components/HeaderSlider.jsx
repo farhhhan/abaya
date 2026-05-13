@@ -35,7 +35,13 @@ const HeaderSlider = () => {
         },
     ];
 
+
     useEffect(() => {
+        if (!db) {
+            setSliderData(defaultSlides);
+            setLoading(false);
+            return;
+        }
         const q = query(collection(db, "advertisements"), orderBy("createdAt", "desc"));
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const ads = snapshot.docs.map(doc => ({

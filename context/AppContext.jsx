@@ -46,6 +46,12 @@ export const AppContextProvider = (props) => {
     };
 
     const fetchProductData = () => {
+        if (!db) {
+            console.warn("Database not initialized. Check your Firebase API keys.");
+            setProducts([...productsDummyData]);
+            setProductsLoading(false);
+            return null;
+        }
         const productsRef = collection(db, "products_abaya");
         const productsQuery = query(productsRef, orderBy("createdAt", "desc"));
 
@@ -81,6 +87,10 @@ export const AppContextProvider = (props) => {
     }
 
     const signInWithGoogle = async () => {
+        if (!auth) {
+            toast.error("Authentication service not available. Check API keys.");
+            return null;
+        }
         try {
             const provider = new GoogleAuthProvider();
             const result = await signInWithPopup(auth, provider);
@@ -103,7 +113,7 @@ export const AppContextProvider = (props) => {
                 });
             } else {
                 // Update last login
-                await setDoc(userDocRef, { 
+                await setDoc(userDocRef, {
                     lastLoginAt: new Date().toISOString(),
                     photoURL: user.photoURL // Sync photo
                 }, { merge: true });
@@ -118,6 +128,7 @@ export const AppContextProvider = (props) => {
     };
 
     const logout = async () => {
+        if (!auth) return;
         try {
             await signOut(auth);
             toast.success("Logged out successfully");
@@ -138,19 +149,19 @@ export const AppContextProvider = (props) => {
         let cartKey = itemId;
         const color = options.color || "";
         const sizeStr = Array.isArray(size) ? size.join('x') : (size || "");
-        const bespokeStr = options.bespoke ? Object.entries(options.bespoke.customMeasurements || {}).map(([k,v]) => `${k}:${v}`).join('|') : "";
-        
+        const bespokeStr = options.bespoke ? Object.entries(options.bespoke.customMeasurements || {}).map(([k, v]) => `${k}:${v}`).join('|') : "";
+
         cartKey = `${itemId}-${sizeStr}-${color}-${bespokeStr}`;
 
         const cartData = structuredClone(cartItems || {});
         cartData[cartKey] = (cartData[cartKey] || 0) + quantity;
-        
+
         if (options.bespoke || color || options.image) {
             const metadata = JSON.parse(localStorage.getItem('cartMetadata') || '{}');
-            metadata[cartKey] = { 
-                color, 
+            metadata[cartKey] = {
+                color,
                 bespoke: options.bespoke,
-                image: options.image || null 
+                image: options.image || null
             };
             localStorage.setItem('cartMetadata', JSON.stringify(metadata));
         }
@@ -230,6 +241,7 @@ export const AppContextProvider = (props) => {
     };
 
     const fetchGlobalSettings = async () => {
+        if (!db) return;
         try {
             const settingsRef = doc(db, "settings", "global");
             const settingsSnap = await getDoc(settingsRef);
@@ -254,9 +266,9 @@ export const AppContextProvider = (props) => {
             const data = await response.json();
             const countryCode = data.country_code;
 
-            const symbolMap = { 
-                'INR': '₹', 'USD': '$', 'AED': 'د.إ', 'SAR': 'ر.س', 
-                'QAR': 'ر.ق', 'KWD': 'د.ك', 'BHD': 'د.ب', 'OMR': 'ر.ع' 
+            const symbolMap = {
+                'INR': '₹', 'USD': '$', 'AED': 'د.إ', 'SAR': 'ر.س',
+                'QAR': 'ر.ق', 'KWD': 'د.ك', 'BHD': 'د.ب', 'OMR': 'ر.ع'
             };
 
             let detectedCurrency = settings.defaultCurrency || 'USD';
@@ -266,7 +278,7 @@ export const AppContextProvider = (props) => {
                 const gccMap = { 'AE': 'AED', 'SA': 'SAR', 'QA': 'QAR', 'KW': 'KWD', 'BH': 'BHD', 'OM': 'OMR' };
                 detectedCurrency = gccMap[countryCode] || 'AED';
             }
-            
+
             setCurrency(detectedCurrency);
             setCurrencySymbol(symbolMap[detectedCurrency] || detectedCurrency);
         } catch (error) {
@@ -280,7 +292,7 @@ export const AppContextProvider = (props) => {
     useEffect(() => {
         const unsubscribe = fetchProductData()
         fetchGlobalSettings();
-        
+
         const localCart = localStorage.getItem('cartItems');
         if (localCart) {
             try {
@@ -308,6 +320,7 @@ export const AppContextProvider = (props) => {
 
     // Auth State Listener
     useEffect(() => {
+        if (!auth) return;
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
             if (user) {
                 // Fetch extra user details from firestore if needed, otherwise use auth payload
